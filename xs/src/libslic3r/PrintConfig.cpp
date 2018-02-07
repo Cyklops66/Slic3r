@@ -9,22 +9,51 @@
 
 namespace Slic3r {
 
-//! macro used to mark string used at localization, 
+//! macro used to mark string used at localization,
 //! return same string
 #define L(s) s
 
 PrintConfigDef::PrintConfigDef()
 {
     t_optiondef_map &Options = this->options;
-    
+
     ConfigOptionDef* def;
 
     // Maximum extruder temperature, bumped to 1500 to support printing of glass.
     const int max_temp = 1500;
 
-	def = this->add("avoid_crossing_perimeters", coBool);
-    def->label = L("Avoid crossing perimeters");
-	def->tooltip = L("Optimize travel moves in order to minimize the crossing of perimeters. "
+	//! On purpose of localization there is that changes at text of tooltip and sidetext:
+	//! - ° -> \u00B0
+	//! - ² -> \u00B2
+	//! - ³ -> \u00B3
+
+    def = this->add("_locked", coBool);
+    def->label = _L("Preset file lock status");
+    def->tooltip = _L("Preset file lock status");
+    def->cli = "_locked!";
+    def->default_value = new ConfigOptionBool(false);
+
+    def = this->add("_version", coInt);
+    def->label = _L("Preset file version number");
+    def->tooltip = _L("Preset file version number");
+    def->cli = "_version=i";
+    def->default_value = new ConfigOptionInt(1);
+
+    def = this->add("_url", coString);
+    def->label = _L("Preset file update URL");
+    def->tooltip = _L("Preset file update URL");
+    def->cli = "_url=s";
+    def->default_value = new ConfigOptionString("");
+
+    def = this->add("_parent", coString);
+    def->label = _L("Preset file parent preset name");
+    def->tooltip = _L("Preset file parent preset name");
+    def->cli = "_parent=s";
+    def->default_value = new ConfigOptionString("");
+
+    def = this->add("avoid_crossing_perimeters", coBool);
+    def->label = _L("Avoid crossing perimeters");
+	def->tooltip = _L("Optimize travel moves in order to minimize the crossing of perimeters. "
                    "This is mostly useful with Bowden extruders which suffer from oozing. "
                    "This feature slows down both the print and the G-code generation.");
     def->cli = "avoid-crossing-perimeters!";
@@ -33,7 +62,7 @@ PrintConfigDef::PrintConfigDef()
     def = this->add("bed_shape", coPoints);
 	def->label = L("Bed shape");
     def->default_value = new ConfigOptionPoints { Pointf(0,0), Pointf(200,0), Pointf(200,200), Pointf(0,200) };
-    
+
     def = this->add("bed_temperature", coInts);
     def->label = L("Other layers");
     def->tooltip = L("Bed temperature for layers after the first one. "
@@ -371,7 +400,7 @@ PrintConfigDef::PrintConfigDef()
                    "check filament diameter and your firmware E steps.");
     def->cli = "extrusion-multiplier=f@";
     def->default_value = new ConfigOptionFloats { 1. };
-    
+
     def = this->add("extrusion_width", coFloatOrPercent);
     def->label = L("Default extrusion width");
     def->category = L("Extrusion Width");
@@ -479,7 +508,7 @@ PrintConfigDef::PrintConfigDef()
     def->cli = "filament-cost=f@";
     def->min = 0;
     def->default_value = new ConfigOptionFloats { 0. };
-    
+
     def = this->add("filament_settings_id", coStrings);
     def->default_value = new ConfigOptionStrings { "" };
 
@@ -629,7 +658,7 @@ PrintConfigDef::PrintConfigDef()
     def->min = 0;
     def->max = max_temp;
     def->default_value = new ConfigOptionInts { 200 };
-    
+
     def = this->add("gap_fill_speed", coFloat);
     def->label = L("Gap fill");
     def->category = L("Speed");
@@ -903,7 +932,7 @@ PrintConfigDef::PrintConfigDef()
                    "the API Key required for authentication.");
     def->cli = "octoprint-apikey=s";
     def->default_value = new ConfigOptionString("");
-    
+
     def = this->add("octoprint_host", coString);
     def->label = L("Host or IP");
     def->tooltip = L("Slic3r can upload G-code files to OctoPrint. This field should contain "
@@ -1021,7 +1050,7 @@ PrintConfigDef::PrintConfigDef()
 
     def = this->add("print_settings_id", coString);
     def->default_value = new ConfigOptionString("");
-    
+
     def = this->add("printer_settings_id", coString);
     def->default_value = new ConfigOptionString("");
 
@@ -1060,7 +1089,7 @@ PrintConfigDef::PrintConfigDef()
     def->sidetext = L("%");
     def->cli = "retract-before-wipe=s@";
     def->default_value = new ConfigOptionPercents { 0. };
-    
+
     def = this->add("retract_layer_change", coBools);
     def->label = L("Retract on layer change");
     def->tooltip = L("This flag enforces a retraction whenever a Z move is done.");
@@ -1160,7 +1189,7 @@ PrintConfigDef::PrintConfigDef()
     def->enum_labels.push_back("Random");
     def->enum_labels.push_back("Nearest");
     def->enum_labels.push_back("Aligned");
-    def->enum_labels.push_back("Rear"); 
+    def->enum_labels.push_back("Rear");
     def->default_value = new ConfigOptionEnum<SeamPosition>(spAligned);
 
 #if 0
@@ -1234,7 +1263,7 @@ PrintConfigDef::PrintConfigDef()
     def->cli = "skirts=i";
     def->min = 0;
     def->default_value = new ConfigOptionInt(1);
-    
+
     def = this->add("slowdown_below_layer_time", coInts);
     def->label = L("Slow down if layer print time is below");
     def->tooltip = L("If layer print time is estimated below this number of seconds, print moves "
@@ -1577,7 +1606,7 @@ PrintConfigDef::PrintConfigDef()
     def->max = 0;
     def->max = max_temp;
     def->default_value = new ConfigOptionInts { 200 };
-    
+
     def = this->add("thin_walls", coBool);
     def->label = L("Detect thin walls");
     def->category = L("Layers and Perimeters");
@@ -1597,7 +1626,7 @@ PrintConfigDef::PrintConfigDef()
         int threads = (unsigned int)boost::thread::hardware_concurrency();
         def->default_value = new ConfigOptionInt(threads > 0 ? threads : 2);
     }
-    
+
     def = this->add("toolchange_gcode", coString);
     def->label = L("Tool change G-code");
     def->tooltip = L("This custom code is inserted right before every extruder change. "
@@ -1758,7 +1787,7 @@ void PrintConfigDef::handle_legacy(t_config_option_key &opt_key, std::string &va
         if (opt_key == "bottom_layer_speed") opt_key = "first_layer_speed";
         try {
             float v = boost::lexical_cast<float>(value);
-            if (v != 0) 
+            if (v != 0)
                 value = boost::lexical_cast<std::string>(v*100) + "%";
         } catch (boost::bad_lexical_cast &) {
             value = "0";
@@ -1795,21 +1824,21 @@ void PrintConfigDef::handle_legacy(t_config_option_key &opt_key, std::string &va
         // transform it into the default value
         value = "60%";
     }
-    
+
     // Ignore the following obsolete configuration keys:
     static std::set<std::string> ignore = {
         "duplicate_x", "duplicate_y", "gcode_arcs", "multiply_x", "multiply_y",
-        "support_material_tool", "acceleration", "adjust_overhang_flow", 
+        "support_material_tool", "acceleration", "adjust_overhang_flow",
         "standby_temperature", "scale", "rotate", "duplicate", "duplicate_grid",
-        "start_perimeters_at_concave_points", "start_perimeters_at_non_overhang", "randomize_start", 
+        "start_perimeters_at_concave_points", "start_perimeters_at_non_overhang", "randomize_start",
         "seal_position", "vibration_limit", "bed_size", "octoprint_host",
-        "print_center", "g0", "threads", "pressure_advance" 
+        "print_center", "g0", "threads", "pressure_advance"
     };
     if (ignore.find(opt_key) != ignore.end()) {
         opt_key = "";
         return;
     }
-    
+
     if (! print_config_def.has(opt_key)) {
         //printf("Unknown option %s\n", opt_key.c_str());
         opt_key = "";
@@ -1850,10 +1879,10 @@ void DynamicPrintConfig::normalize()
             //     this->option("support_material_interface_extruder", true)->setInt(extruder);
         }
     }
-    
+
     if (!this->has("solid_infill_extruder") && this->has("infill_extruder"))
         this->option("solid_infill_extruder", true)->setInt(this->option("infill_extruder")->getInt());
-    
+
     if (this->has("spiral_vase") && this->opt<ConfigOptionBool>("spiral_vase", true)->value) {
         {
             // this should be actually done only on the spiral layers instead of all
@@ -1886,7 +1915,7 @@ double PrintConfig::min_object_distance(const ConfigBase *config)
 {
     double extruder_clearance_radius = config->option("extruder_clearance_radius")->getFloat();
     double duplicate_distance = config->option("duplicate_distance")->getFloat();
-    
+
     // min object distance is max(duplicate_distance, clearance_radius)
     return (config->option("complete_objects")->getBool() && extruder_clearance_radius > duplicate_distance)
         ? extruder_clearance_radius
@@ -1914,7 +1943,7 @@ std::string FullPrintConfig::validate()
     for (double nd : this->nozzle_diameter.values)
         if (nd < 0.005)
             return "Invalid value for --nozzle-diameter";
-    
+
     // --perimeters
     if (this->perimeters.value < 0)
         return "Invalid value for --perimeters";
@@ -1924,8 +1953,8 @@ std::string FullPrintConfig::validate()
         return "Invalid value for --top-solid-layers";
     if (this->bottom_solid_layers < 0)
         return "Invalid value for --bottom-solid-layers";
-    
-    if (this->use_firmware_retraction.value && 
+
+    if (this->use_firmware_retraction.value &&
         this->gcode_flavor.value != gcfSmoothie &&
         this->gcode_flavor.value != gcfRepRap &&
         this->gcode_flavor.value != gcfMarlin &&
@@ -1937,15 +1966,15 @@ std::string FullPrintConfig::validate()
         for (bool wipe : this->wipe.values)
              if (wipe)
                 return "--use-firmware-retraction is not compatible with --wipe";
-        
+
     // --gcode-flavor
     if (! print_config_def.get("gcode_flavor")->has_enum_value(this->gcode_flavor.serialize()))
         return "Invalid value for --gcode-flavor";
-    
+
     // --fill-pattern
     if (! print_config_def.get("fill_pattern")->has_enum_value(this->fill_pattern.serialize()))
         return "Invalid value for --fill-pattern";
-    
+
     // --external-fill-pattern
     if (! print_config_def.get("external_fill_pattern")->has_enum_value(this->external_fill_pattern.serialize()))
         return "Invalid value for --external-fill-pattern";
@@ -1954,7 +1983,7 @@ std::string FullPrintConfig::validate()
     if (fabs(this->fill_density.value - 100.) < EPSILON &&
         ! print_config_def.get("external_fill_pattern")->has_enum_value(this->fill_pattern.serialize()))
         return "The selected fill pattern is not supposed to work at 100% density";
-    
+
     // --infill-every-layers
     if (this->infill_every_layers < 1)
         return "Invalid value for --infill-every-layers";
@@ -1962,11 +1991,11 @@ std::string FullPrintConfig::validate()
     // --skirt-height
     if (this->skirt_height < -1) // -1 means as tall as the object
         return "Invalid value for --skirt-height";
-    
+
     // --bridge-flow-ratio
     if (this->bridge_flow_ratio <= 0)
         return "Invalid value for --bridge-flow-ratio";
-    
+
     // extruder clearance
     if (this->extruder_clearance_radius <= 0)
         return "Invalid value for --extruder-clearance-radius";
@@ -1998,7 +2027,7 @@ std::string FullPrintConfig::validate()
         if (this->support_material || this->support_material_enforce_layers > 0)
             return "Spiral vase mode is not compatible with support material";
     }
-    
+
     // extrusion widths
     {
         double max_nozzle_diameter = 0.;
@@ -2055,7 +2084,7 @@ std::string FullPrintConfig::validate()
         if (out_of_range)
             return std::string("Value out of range: " + opt_key);
     }
-    
+
     // The configuration is valid.
     return "";
 }

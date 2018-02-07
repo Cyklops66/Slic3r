@@ -32,7 +32,7 @@ our $BUTTON_TEST_EVENT     = Wx::NewEventType;
 
 sub new {
     my ($class, %params) = @_;
-    
+
     my $self = $class->SUPER::new(undef, -1, $Slic3r::FORK_NAME . ' - ' . $Slic3r::VERSION, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE);
     Slic3r::GUI::set_main_frame($self);
     if ($^O eq 'MSWin32') {
@@ -41,9 +41,9 @@ sub new {
         $iconfile = Slic3r::var("Slic3r.ico") unless -f $iconfile;
         $self->SetIcon(Wx::Icon->new($iconfile, wxBITMAP_TYPE_ICO));
     } else {
-        $self->SetIcon(Wx::Icon->new(Slic3r::var("Slic3r_128px.png"), wxBITMAP_TYPE_PNG));        
+        $self->SetIcon(Wx::Icon->new(Slic3r::var("Slic3r_128px.png"), wxBITMAP_TYPE_PNG));
     }
-    
+
     # store input params
     # If set, the "Controller" tab for the control of the printer over serial line and the serial port settings are hidden.
     $self->{no_controller} = $params{no_controller};
@@ -55,19 +55,19 @@ sub new {
     # initialize tabpanel and menubar
     $self->_init_tabpanel;
     $self->_init_menubar;
-    
+
     # set default tooltip timer in msec
     # SetAutoPop supposedly accepts long integers but some bug doesn't allow for larger values
     # (SetAutoPop is not available on GTK.)
     eval { Wx::ToolTip::SetAutoPop(32767) };
-    
+
     # initialize status bar
     $self->{statusbar} = Slic3r::GUI::ProgressStatusBar->new($self, -1);
     $self->{statusbar}->SetStatusText(L("Version ").$Slic3r::VERSION.L(" - Remember to check for updates at http://github.com/prusa3d/slic3r/releases"));
     $self->SetStatusBar($self->{statusbar});
-    
+
     $self->{loaded} = 1;
-    
+
     # initialize layout
     {
         my $sizer = Wx::BoxSizer->new(wxVERTICAL);
@@ -81,7 +81,7 @@ sub new {
         $self->Show;
         $self->Layout;
     }
-    
+
     # declare events
     EVT_CLOSE($self, sub {
         my (undef, $event) = @_;
@@ -99,13 +99,13 @@ sub new {
     });
 
     $self->update_ui_from_settings;
-    
+
     return $self;
 }
 
 sub _init_tabpanel {
     my ($self) = @_;
-    
+
     $self->{tabpanel} = my $panel = Wx::Notebook->new($self, -1, wxDefaultPosition, wxDefaultSize, wxNB_TOP | wxTAB_TRAVERSAL);
     Slic3r::GUI::set_tab_panel($panel);
 
@@ -113,14 +113,14 @@ sub _init_tabpanel {
         my $panel = $self->{tabpanel}->GetCurrentPage;
         $panel->OnActivate if $panel->can('OnActivate');
     });
-    
+
     if (!$self->{no_plater}) {
         $panel->AddPage($self->{plater} = Slic3r::GUI::Plater->new($panel), L("Plater"));
         if (!$self->{no_controller}) {
             $panel->AddPage($self->{controller} = Slic3r::GUI::Controller->new($panel), L("Controller"));
         }
     }
-    
+
     #TODO this is an example of a Slic3r XS interface call to add a new preset editor page to the main view.
     # The following event is emited by the C++ Tab implementation on config value change.
     EVT_COMMAND($self, -1, $VALUE_CHANGE_EVENT, sub {
@@ -138,7 +138,7 @@ sub _init_tabpanel {
             }
         }
         # don't save while loading for the first time
-        $self->config->save($Slic3r::GUI::autosave) if $Slic3r::GUI::autosave && $self->{loaded};        
+        $self->config->save($Slic3r::GUI::autosave) if $Slic3r::GUI::autosave && $self->{loaded};
     });
     # The following event is emited by the C++ Tab implementation on preset selection,
     # or when the preset's "modified" status changes.
@@ -158,7 +158,7 @@ sub _init_tabpanel {
                     for my $tab_name_other (qw(print filament)) {
                         # If the printer tells us that the print or filament preset has been switched or invalidated,
                         # refresh the print or filament tab page. Otherwise just refresh the combo box.
-                        my $update_action = ($reload_dependent_tabs && (first { $_ eq $tab_name_other } (@{$reload_dependent_tabs}))) 
+                        my $update_action = ($reload_dependent_tabs && (first { $_ eq $tab_name_other } (@{$reload_dependent_tabs})))
                             ? 'load_current_preset' : 'update_tab_ui';
                         $self->{options_tabs}{$tab_name_other}->$update_action;
                     }
@@ -211,14 +211,14 @@ sub _init_tabpanel {
             Slic3r::GUI::show_info($self, L("Connection to OctoPrint works correctly."), _L("Success!"));
         } else {
             Slic3r::GUI::show_error($self,
-                L("I wasn't able to connect to OctoPrint (") . $res->status_line . 
+                L("I wasn't able to connect to OctoPrint (") . $res->status_line .
                 L("). Check hostname and OctoPrint version (at least 1.1.0 is required)."));
         }
     });
     # A variable to inform C++ Tab implementation about disabling of Browse button
     $self->{is_disabled_button_browse} = (!eval "use Net::Bonjour; 1") ? 1 : 0 ;
     # A variable to inform C++ Tab implementation about user_agent
-    $self->{is_user_agent} = (eval "use LWP::UserAgent; 1") ? 1 : 0 ;    
+    $self->{is_user_agent} = (eval "use LWP::UserAgent; 1") ? 1 : 0 ;
     Slic3r::GUI::create_preset_tabs(wxTheApp->{preset_bundle}, $self->{no_controller},
                                     $self->{is_disabled_button_browse},
                                     $self->{is_user_agent},
@@ -228,7 +228,7 @@ sub _init_tabpanel {
     for my $tab_name (qw(print filament printer)) {
         $self->{options_tabs}{$tab_name} = Slic3r::GUI::get_preset_tab("$tab_name");
     }
-    
+
     if ($self->{plater}) {
         $self->{plater}->on_select_preset(sub {
             my ($group, $name) = @_;
@@ -244,7 +244,7 @@ sub _init_tabpanel {
 
 sub _init_menubar {
     my ($self) = @_;
-    
+
     # File menu
     my $fileMenu = Wx::Menu->new;
     {
@@ -288,7 +288,7 @@ sub _init_menubar {
             $self->quick_slice(save_as => 1, export_svg => 1);
         }, undef, 'shape_handles.png');
         $self->{menu_item_reslice_now} = $self->_append_menu_item(
-            $fileMenu, L("(&Re)Slice Now\tCtrl+S"), L('Start new slicing process'), 
+            $fileMenu, L("(&Re)Slice Now\tCtrl+S"), L('Start new slicing process'),
             sub { $self->reslice_now; }, undef, 'shape_handles.png');
         $fileMenu->AppendSeparator();
         $self->_append_menu_item($fileMenu, L("Repair STL file…"), L('Automatically repair an STL file'), sub {
@@ -305,11 +305,11 @@ sub _init_menubar {
             $self->Close(0);
         }, wxID_EXIT);
     }
-    
+
     # Plater menu
     unless ($self->{no_plater}) {
         my $plater = $self->{plater};
-        
+
         $self->{plater_menu} = Wx::Menu->new;
         $self->_append_menu_item($self->{plater_menu}, L("Export G-code..."), L('Export current plate as G-code'), sub {
             $plater->export_gcode;
@@ -323,11 +323,11 @@ sub _init_menubar {
         $self->_append_menu_item($self->{plater_menu}, L("Export plate as 3MF..."), L('Export current plate as 3MF'), sub {
             $plater->export_3mf;
         }, undef, 'brick_go.png');
-        
+
         $self->{object_menu} = $self->{plater}->object_menu;
         $self->on_plater_selection_changed(0);
     }
-    
+
     # Window menu
     my $windowMenu = Wx::Menu->new;
     {
@@ -373,7 +373,7 @@ sub _init_menubar {
         $self->_append_menu_item($self->{viewMenu}, $accel->(L('Left'),   '5'), L('Left View')   , sub { $self->select_view('left'   ); });
         $self->_append_menu_item($self->{viewMenu}, $accel->(L('Right'),  '6'), L('Right View')  , sub { $self->select_view('right'  ); });
     }
-    
+
     # Help menu
     my $helpMenu = Wx::Menu->new;
     {
@@ -409,7 +409,14 @@ sub _init_menubar {
             wxTheApp->about;
         });
     }
-    
+
+    my $hokusMenu = Wx::Menu->new;
+    {
+        $self->_append_menu_item($hokusMenu, "Pokus", "Pokus", sub {
+            Slic3r::Http::download();
+        });
+    }
+
     # menubar
     # assign menubar to frame after appending items, otherwise special items
     # will not be handled correctly
@@ -420,10 +427,12 @@ sub _init_menubar {
         $menubar->Append($self->{object_menu}, L("&Object")) if $self->{object_menu};
         $menubar->Append($windowMenu, L("&Window"));
         $menubar->Append($self->{viewMenu}, L("&View")) if $self->{viewMenu};
-        # Add an optional debug menu 
+        # Add an optional debug menu
         # (Select application language from the list of installed languages)
         Slic3r::GUI::add_debug_menu($menubar, $self->{lang_ch_event});
         $menubar->Append($helpMenu, L("&Help"));
+        $menubar->Append($hokusMenu, "Hoku&s");
+        # Add an optional debug menu. In production code, the add_debug_menu() call should do nothing.
         $self->SetMenuBar($menubar);
     }
 }
@@ -444,18 +453,18 @@ sub on_plater_selection_changed {
 # To perform the "Quck Slice", "Quick Slice and Save As", "Repeat last Quick Slice" and "Slice to SVG".
 sub quick_slice {
     my ($self, %params) = @_;
-    
+
     my $progress_dialog;
     eval {
         # validate configuration
         my $config = wxTheApp->{preset_bundle}->full_config();
         $config->validate;
-        
+
         # select input file
         my $input_file;
         if (!$params{reslice}) {
-            my $dialog = Wx::FileDialog->new($self, L('Choose a file to slice (STL/OBJ/AMF/3MF/PRUSA):'), 
-                wxTheApp->{app_config}->get_last_dir, "", 
+            my $dialog = Wx::FileDialog->new($self, L('Choose a file to slice (STL/OBJ/AMF/3MF/PRUSA):'),
+                wxTheApp->{app_config}->get_last_dir, "",
                 &Slic3r::GUI::MODEL_WILDCARD, wxFD_OPEN | wxFD_FILE_MUST_EXIST);
             if ($dialog->ShowModal != wxID_OK) {
                 $dialog->Destroy;
@@ -479,13 +488,13 @@ sub quick_slice {
         }
         my $input_file_basename = basename($input_file);
         wxTheApp->{app_config}->update_skein_dir(dirname($input_file));
-        
+
         my $print_center;
         {
             my $bed_shape = Slic3r::Polygon->new_scale(@{$config->bed_shape});
             $print_center = Slic3r::Pointf->new_unscale(@{$bed_shape->bounding_box->center});
         }
-        
+
         my $sprint = Slic3r::Print::Simple->new(
             print_center    => $print_center,
             status_cb       => sub {
@@ -493,13 +502,13 @@ sub quick_slice {
                 $progress_dialog->Update($percent, "$message…");
             },
         );
-        
+
         # keep model around
         my $model = Slic3r::Model->read_from_file($input_file);
-        
+
         $sprint->apply_config($config);
         $sprint->set_model($model);
-        
+
         # Copy the names of active presets into the placeholder parser.
         wxTheApp->{preset_bundle}->export_selections_pp($sprint->placeholder_parser);
 
@@ -523,16 +532,16 @@ sub quick_slice {
             wxTheApp->{app_config}->update_last_output_dir(dirname($output_file));
             $dlg->Destroy;
         }
-        
+
         # show processbar dialog
-        $progress_dialog = Wx::ProgressDialog->new(L('Slicing…'), L("Processing ").$input_file_basename."…", 
+        $progress_dialog = Wx::ProgressDialog->new(L('Slicing…'), L("Processing ").$input_file_basename."…",
             100, $self, 0);
         $progress_dialog->Pulse;
-        
+
         {
             my @warnings = ();
             local $SIG{__WARN__} = sub { push @warnings, $_[0] };
-            
+
             $sprint->output_file($output_file);
             if ($params{export_svg}) {
                 $sprint->export_svg;
@@ -544,10 +553,10 @@ sub quick_slice {
         }
         $progress_dialog->Destroy;
         undef $progress_dialog;
-        
+
         my $message = $input_file_basename.L(" was successfully sliced.");
         wxTheApp->notify($message);
-        Wx::MessageDialog->new($self, $message, L('Slicing Done!'), 
+        Wx::MessageDialog->new($self, $message, L('Slicing Done!'),
             wxOK | wxICON_INFORMATION)->ShowModal;
     };
     Slic3r::GUI::catch_error($self, sub { $progress_dialog->Destroy if $progress_dialog });
@@ -560,7 +569,7 @@ sub reslice_now {
 
 sub repair_stl {
     my $self = shift;
-    
+
     my $input_file;
     {
         my $dialog = Wx::FileDialog->new($self, L('Select the STL file to repair:'),
@@ -573,7 +582,7 @@ sub repair_stl {
         $input_file = $dialog->GetPaths;
         $dialog->Destroy;
     }
-    
+
     my $output_file = $input_file;
     {
         $output_file =~ s/\.[sS][tT][lL]$/_fixed.obj/;
@@ -586,7 +595,7 @@ sub repair_stl {
         $output_file = $dlg->GetPath;
         $dlg->Destroy;
     }
-    
+
     my $tmesh = Slic3r::TriangleMesh->new;
     $tmesh->ReadSTLFile($input_file);
     $tmesh->repair;
@@ -596,7 +605,7 @@ sub repair_stl {
 
 sub export_config {
     my $self = shift;
-    # Generate a cummulative configuration for the selected print, filaments and printer.    
+    # Generate a cummulative configuration for the selected print, filaments and printer.
     my $config = wxTheApp->{preset_bundle}->full_config();
     # Validate the cummulative configuration.
     eval { $config->validate; };
@@ -620,7 +629,7 @@ sub load_config_file {
     my ($self, $file) = @_;
     if (!$file) {
         return unless $self->check_unsaved_changes;
-        my $dlg = Wx::FileDialog->new($self, L('Select configuration to load:'), 
+        my $dlg = Wx::FileDialog->new($self, L('Select configuration to load:'),
             $last_config ? dirname($last_config) : wxTheApp->{app_config}->get_last_dir,
             "config.ini",
             'INI files (*.ini, *.gcode)|*.ini;*.INI;*.gcode;*.g', wxFD_OPEN | wxFD_FILE_MUST_EXIST);
@@ -645,7 +654,7 @@ sub export_configbundle {
     # Ask user for a file name.
     my $dlg = Wx::FileDialog->new($self, L('Save presets bundle as:'),
         $last_config ? dirname($last_config) : wxTheApp->{app_config}->get_last_dir,
-        "Slic3r_config_bundle.ini", 
+        "Slic3r_config_bundle.ini",
         &Slic3r::GUI::FILE_WILDCARDS->{ini}, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
     my $file = ($dlg->ShowModal == wxID_OK) ? $dlg->GetPath : undef;
     $dlg->Destroy;
@@ -664,15 +673,15 @@ sub load_configbundle {
     my ($self, $file, $reset_user_profile) = @_;
     return unless $self->check_unsaved_changes;
     if (!$file) {
-        my $dlg = Wx::FileDialog->new($self, L('Select configuration to load:'), 
+        my $dlg = Wx::FileDialog->new($self, L('Select configuration to load:'),
             $last_config ? dirname($last_config) : wxTheApp->{app_config}->get_last_dir,
-            "config.ini", 
+            "config.ini",
             &Slic3r::GUI::FILE_WILDCARDS->{ini}, wxFD_OPEN | wxFD_FILE_MUST_EXIST);
         return unless $dlg->ShowModal == wxID_OK;
         $file = $dlg->GetPaths;
         $dlg->Destroy;
     }
-    
+
     wxTheApp->{app_config}->update_config_dir(dirname($file));
 
     my $presets_imported = 0;
@@ -683,7 +692,7 @@ sub load_configbundle {
     foreach my $tab (values %{$self->{options_tabs}}) {
         $tab->load_current_preset;
     }
-    
+
     my $message = sprintf L("%d presets successfully imported."), $presets_imported;
     Slic3r::GUI::show_info($self, $message);
 }
@@ -738,19 +747,19 @@ sub config_wizard {
 # to notify the user whether he is aware that some preset changes will be lost.
 sub check_unsaved_changes {
     my $self = shift;
-    
+
     my @dirty = ();
     foreach my $tab (values %{$self->{options_tabs}}) {
         push @dirty, $tab->title if $tab->current_preset_is_dirty;
     }
-    
+
     if (@dirty) {
         my $titles = join ', ', @dirty;
         my $confirm = Wx::MessageDialog->new($self, L("You have unsaved changes ").($titles).L(". Discard changes and continue anyway?"),
                                              L('Unsaved Presets'), wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT);
         return $confirm->ShowModal == wxID_YES;
     }
-    
+
     return 1;
 }
 

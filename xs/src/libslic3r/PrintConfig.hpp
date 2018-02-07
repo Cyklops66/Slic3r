@@ -23,7 +23,7 @@
 namespace Slic3r {
 
 enum GCodeFlavor {
-    gcfRepRap, gcfRepetier, gcfTeacup, gcfMakerWare, gcfMarlin, gcfSailfish, gcfMach3, gcfMachinekit, 
+    gcfRepRap, gcfRepetier, gcfTeacup, gcfMakerWare, gcfMarlin, gcfSailfish, gcfMach3, gcfMachinekit,
     gcfSmoothie, gcfNoExtrusion,
 };
 
@@ -133,7 +133,7 @@ public:
 // This definition is constant.
 extern PrintConfigDef print_config_def;
 
-// Slic3r dynamic configuration, used to override the configuration 
+// Slic3r dynamic configuration, used to override the configuration
 // per object, per modification volume or per printing material.
 // The dynamic configuration is also used to store user modifications of the print global parameters,
 // so the modified configuration values may be diffed against the active configuration
@@ -233,12 +233,12 @@ protected:
             m_defaults = defaults;
             m_keys.clear();
             m_keys.reserve(m_map_name_to_offset.size());
-			for (const auto &kvp : defs->options) {
-				// Find the option given the option name kvp.first by an offset from (char*)m_defaults.
-				ConfigOption *opt = this->optptr(kvp.first, m_defaults);
-				if (opt == nullptr)
-					// This option is not defined by the ConfigBase of type T.
-					continue;
+            for (const auto &kvp : defs->options) {
+                // Find the option given the option name kvp.first by an offset from (char*)m_defaults.
+                ConfigOption *opt = this->optptr(kvp.first, m_defaults);
+                if (opt == nullptr)
+                    // This option is not defined by the ConfigBase of type T.
+                    continue;
                 m_keys.emplace_back(kvp.first);
                 const ConfigOptionDef *def = defs->get(kvp.first);
                 assert(def != nullptr);
@@ -330,7 +330,7 @@ public:
     ConfigOptionBool                support_material_with_sheath;
     ConfigOptionFloatOrPercent      support_material_xy_spacing;
     ConfigOptionFloat               xy_size_compensation;
-    
+
 protected:
     void initialize(StaticCacheBase &cache, const char *base_ptr)
     {
@@ -492,7 +492,7 @@ public:
     ConfigOptionBool                use_relative_e_distances;
     ConfigOptionBool                use_volumetric_e;
     ConfigOptionBool                variable_layer_height;
-    
+
     std::string get_extrusion_axis() const
     {
         return
@@ -553,6 +553,10 @@ public:
     double                          min_object_distance() const;
     static double                   min_object_distance(const ConfigBase *config);
 
+    ConfigOptionBool                _locked;
+    ConfigOptionInt                 _version;
+    ConfigOptionString              _url;
+    ConfigOptionString              _parent;
     ConfigOptionBool                avoid_crossing_perimeters;
     ConfigOptionPoints              bed_shape;
     ConfigOptionInts                bed_temperature;
@@ -611,12 +615,16 @@ public:
     ConfigOptionFloat               wipe_tower_width;
     ConfigOptionFloat               wipe_tower_per_color_wipe;
     ConfigOptionFloat               z_offset;
-    
+
 protected:
     PrintConfig(int) : GCodeConfig(1) {}
     void initialize(StaticCacheBase &cache, const char *base_ptr)
     {
         this->GCodeConfig::initialize(cache, base_ptr);
+        OPT_PTR(_locked);
+        OPT_PTR(_version);
+        OPT_PTR(_url);
+        OPT_PTR(_parent);
         OPT_PTR(avoid_crossing_perimeters);
         OPT_PTR(bed_shape);
         OPT_PTR(bed_temperature);
@@ -686,7 +694,7 @@ public:
     ConfigOptionString              octoprint_apikey;
     ConfigOptionString              serial_port;
     ConfigOptionInt                 serial_speed;
-    
+
 protected:
     void initialize(StaticCacheBase &cache, const char *base_ptr)
     {
@@ -698,14 +706,14 @@ protected:
 };
 
 // This object is mapped to Perl as Slic3r::Config::Full.
-class FullPrintConfig : 
-    public PrintObjectConfig, 
+class FullPrintConfig :
+    public PrintObjectConfig,
     public PrintRegionConfig,
     public PrintConfig,
     public HostConfig
 {
     STATIC_PRINT_CONFIG_CACHE_DERIVED(FullPrintConfig)
-	FullPrintConfig() : PrintObjectConfig(0), PrintRegionConfig(0), PrintConfig(0), HostConfig(0) { initialize_cache(); *this = s_cache_FullPrintConfig.defaults(); }
+    FullPrintConfig() : PrintObjectConfig(0), PrintRegionConfig(0), PrintConfig(0), HostConfig(0) { initialize_cache(); *this = s_cache_FullPrintConfig.defaults(); }
 
 public:
     // Validate the FullPrintConfig. Returns an empty string on success, otherwise an error message is returned.

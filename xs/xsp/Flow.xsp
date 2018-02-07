@@ -14,7 +14,7 @@
         %code{% THIS->bridge = bridge; %};
     Clone<Flow> clone()
         %code{% RETVAL = THIS; %};
-    
+
     float width()
         %code{% RETVAL = THIS->width; %};
     float height()

@@ -54,7 +54,7 @@ public:
 
     // Name of the preset, usually derived form the file name.
     std::string         name;
-    // File name of the preset. This could be a Print / Filament / Printer preset, 
+    // File name of the preset. This could be a Print / Filament / Printer preset,
     // or a Configuration file bundling the Print + Filament + Printer presets (in that case is_external will be true),
     // or it could be a G-code (again, is_external will be true).
     std::string         file;
@@ -65,11 +65,15 @@ public:
     // Configuration data, loaded from a file, or set from the defaults.
     DynamicPrintConfig  config;
 
+    void load_defaults(const std::vector<std::string> &keys);
+
     // Load this profile for the following keys only.
     // Throws std::runtime_error in case the file cannot be read.
-    DynamicPrintConfig& load(const std::vector<std::string> &keys);
+    void load(const boost::property_tree::ptree &tree);
+    void load_with_parent(const Preset &parent, const boost::property_tree::ptree &tree);
 
-    void                save();
+    void save();
+    void save_with_parent(const Preset &parent);
 
     // Return a label of this preset, consisting of a name and a "(modified)" suffix, if this preset is dirty.
     std::string         label() const;
@@ -88,6 +92,14 @@ public:
     // Resize the extruder specific fields, initialize them with the content of the 1st extruder.
     void                set_num_extruders(unsigned int n) { set_num_extruders(this->config, n); }
 
+    // Whether the preset is locked for modifications
+    bool                is_locked() const { return this->config.opt_bool("_locked"); }
+
+    // For inheriting preset files, this holds the name of the parent preset.
+    // Empty for regular presets.
+    // Inheriting is only permited for internal prseets (ie. is_external = false).
+    const std::string&  parent_name() const { return this->config.opt_string("_parent"); }
+
     // Sort lexicographically by a preset name. The preset name shall be unique across a single PresetCollection.
     bool                operator<(const Preset &other) const { return this->name < other.name; }
 
@@ -101,11 +113,13 @@ public:
 protected:
     friend class        PresetCollection;
     friend class        PresetBundle;
+
     static void         normalize(DynamicPrintConfig &config);
     // Resize the extruder specific vectors ()
     static void         set_num_extruders(DynamicPrintConfig &config, unsigned int n);
     static const std::string& suffix_modified();
     static std::string  remove_suffix_modified(const std::string &name);
+    static const std::vector<std::string>& common_options();
 };
 
 // Collections of presets of the same type (one of the Print, Filament or Printer type).
@@ -164,11 +178,11 @@ public:
     Preset&         preset(size_t idx)          { return (int(idx) == m_idx_selected) ? m_edited_preset : m_presets[idx]; }
     const Preset&   preset(size_t idx) const    { return const_cast<PresetCollection*>(this)->preset(idx); }
     void            discard_current_changes()   { m_presets[m_idx_selected].reset_dirty(); m_edited_preset = m_presets[m_idx_selected]; }
-    
+
     // Return a preset by its name. If the preset is active, a temporary copy is returned.
     // If a preset is not found by its name, null is returned.
     Preset*         find_preset(const std::string &name, bool first_visible_if_not_found = false);
-    const Preset*   find_preset(const std::string &name, bool first_visible_if_not_found = false) const 
+    const Preset*   find_preset(const std::string &name, bool first_visible_if_not_found = false) const
         { return const_cast<PresetCollection*>(this)->find_preset(name, first_visible_if_not_found); }
 
     size_t          first_visible_idx() const;
@@ -205,7 +219,7 @@ public:
     // Update a dirty floag of the current preset, update the labels of the UI component accordingly.
     // Return true if the dirty flag changed.
     bool            update_dirty_ui(wxBitmapComboBox *ui);
-    
+
     // Select a profile by its name. Return true if the selection changed.
     // Without force, the selection is only updated if the index changes.
     // With force, the changes are reverted if the new index is the same as the old index.
@@ -231,10 +245,14 @@ private:
     std::deque<Preset>::const_iterator find_preset_internal(const std::string &name) const
         { return const_cast<PresetCollection*>(this)->find_preset_internal(name); }
 
+    const Preset& find_parent_preset(const Preset &preset) const;
+
+    static boost::property_tree::ptree read_ini(const std::string &file);
+
     // Type of this PresetCollection: TYPE_PRINT, TYPE_FILAMENT or TYPE_PRINTER.
     Preset::Type            m_type;
     // List of presets, starting with the "- default -" preset.
-    // Use deque to force the container to allocate an object per each entry, 
+    // Use deque to force the container to allocate an object per each entry,
     // so that the addresses of the presets don't change during resizing of the container.
     std::deque<Preset>      m_presets;
     // Initially this preset contains a copy of the selected preset. Later on, this copy may be modified by the user.

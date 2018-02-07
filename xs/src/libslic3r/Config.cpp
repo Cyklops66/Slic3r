@@ -1,6 +1,6 @@
 #include "Config.hpp"
 #include "Utils.hpp"
-#include <assert.h>
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <exception> // std::runtime_error
@@ -250,7 +250,7 @@ bool ConfigBase::set_deserialize_raw(const t_config_option_key &opt_key_src, con
         if (optdef == nullptr)
             throw UnknownOptionException();
     }
-    
+
     if (! optdef->shortcut.empty()) {
         // Aliasing for example "solid_layers" to "top_solid_layers" and "bottom_solid_layers".
         for (const t_config_option_key &shortcut : optdef->shortcut)
@@ -259,7 +259,7 @@ bool ConfigBase::set_deserialize_raw(const t_config_option_key &opt_key_src, con
                 return false;
         return true;
     }
-    
+
     ConfigOption *opt = this->option(opt_key, true);
     assert(opt != nullptr);
     return opt->deserialize(value, append);
@@ -284,7 +284,7 @@ double ConfigBase::get_abs_value(const t_config_option_key &opt_key) const
         // Compute absolute value over the absolute value of the base option.
         //FIXME there are some ratio_over chains, which end with empty ratio_with.
         // For example, XXX_extrusion_width parameters are not handled by get_abs_value correctly.
-        return opt_def->ratio_over.empty() ? 0. : 
+        return opt_def->ratio_over.empty() ? 0. :
             static_cast<const ConfigOptionFloatOrPercent*>(raw_opt)->get_abs_value(this->get_abs_value(opt_def->ratio_over));
     }
     throw std::runtime_error("ConfigBase::get_abs_value(): Not a valid option type for get_abs_value()");
@@ -292,7 +292,7 @@ double ConfigBase::get_abs_value(const t_config_option_key &opt_key) const
 
 // Return an absolute value of a possibly relative config variable.
 // For example, return absolute infill extrusion width, either from an absolute value, or relative to a provided value.
-double ConfigBase::get_abs_value(const t_config_option_key &opt_key, double ratio_over) const 
+double ConfigBase::get_abs_value(const t_config_option_key &opt_key, double ratio_over) const
 {
     // Get stored option value.
     const ConfigOption *raw_opt = this->option(opt_key);
@@ -312,11 +312,11 @@ void ConfigBase::setenv_()
         ss << "SLIC3R_";
         ss << *it;
         std::string envname = ss.str();
-        
+
         // capitalize environment variable name
         for (size_t i = 0; i < envname.size(); ++i)
             envname[i] = (envname[i] <= 'z' && envname[i] >= 'a') ? envname[i]-('a'-'A') : envname[i];
-        
+
         boost::nowide::setenv(envname.c_str(), this->serialize(*it).c_str(), 1);
     }
 }
@@ -436,12 +436,19 @@ void ConfigBase::load_from_gcode_string(const char* str)
 
 void ConfigBase::save(const std::string &file) const
 {
-    boost::nowide::ofstream c;
-    c.open(file, std::ios::out | std::ios::trunc);
-    c << "# " << Slic3r::header_slic3r_generated() << std::endl;
-    for (const std::string &opt_key : this->keys())
-        c << opt_key << " = " << this->serialize(opt_key) << std::endl;
-    c.close();
+    save_only(file, this->keys());
+}
+
+void ConfigBase::save_only(const std::string &file, const t_config_option_keys &keys) const
+{
+    boost::nowide::ofstream ostream{file, std::ios::out | std::ios::trunc};
+    ostream << "# " << Slic3r::header_slic3r_generated() << std::endl;
+    for (const std::string &opt_key : keys) {
+        const ConfigOption *opt  = this->option(opt_key);
+        if (opt != nullptr) {
+            ostream << opt_key << " = " << opt->serialize() << std::endl;
+        }
+    }
 }
 
 bool DynamicConfig::operator==(const DynamicConfig &rhs) const
@@ -519,12 +526,12 @@ void StaticConfig::set_defaults()
     }
 }
 
-t_config_option_keys StaticConfig::keys() const 
+t_config_option_keys StaticConfig::keys() const
 {
     t_config_option_keys keys;
-	assert(this->def != nullptr);
+    assert(this->def() != nullptr);
     for (const auto &opt_def : this->def()->options)
-        if (this->option(opt_def.first) != nullptr) 
+        if (this->option(opt_def.first) != nullptr)
             keys.push_back(opt_def.first);
     return keys;
 }

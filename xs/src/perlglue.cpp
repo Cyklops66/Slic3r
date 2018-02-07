@@ -64,10 +64,11 @@ REGISTER_CLASS(PresetCollection, "GUI::PresetCollection");
 REGISTER_CLASS(PresetBundle, "GUI::PresetBundle");
 REGISTER_CLASS(PresetHints, "GUI::PresetHints");
 REGISTER_CLASS(TabIface, "GUI::Tab");
+REGISTER_CLASS(Http, "Http");
 
 SV* ConfigBase__as_hash(ConfigBase* THIS)
 {
-    HV* hv = newHV();    
+    HV* hv = newHV();
     for (auto &key : THIS->keys())
         (void)hv_store(hv, key.c_str(), key.length(), ConfigBase__get(THIS, key), 0);
     return newRV_noinc((SV*)hv);
@@ -76,7 +77,7 @@ SV* ConfigBase__as_hash(ConfigBase* THIS)
 SV* ConfigBase__get(ConfigBase* THIS, const t_config_option_key &opt_key)
 {
     ConfigOption *opt = THIS->option(opt_key, false);
-    return (opt == nullptr) ? 
+    return (opt == nullptr) ?
         &PL_sv_undef :
         ConfigOption_to_SV(*opt, *THIS->def()->get(opt_key));
 }
@@ -156,7 +157,7 @@ SV* ConfigBase__get_at(ConfigBase* THIS, const t_config_option_key &opt_key, siz
     ConfigOption* opt = THIS->option(opt_key, false);
     if (opt == nullptr)
         return &PL_sv_undef;
-    
+
     const ConfigOptionDef* def = THIS->def()->get(opt_key);
     switch (def->type) {
     case coFloats:
@@ -333,9 +334,9 @@ SV* to_AV(ExPolygon* expolygon)
     const unsigned int num_holes = expolygon->holes.size();
     AV* av = newAV();
     av_extend(av, num_holes);  // -1 +1
-    
+
     av_store(av, 0, perl_to_SV_ref(expolygon->contour));
-    
+
     for (unsigned int i = 0; i < num_holes; i++) {
         av_store(av, i+1, perl_to_SV_ref(expolygon->holes[i]));
     }
@@ -359,7 +360,7 @@ void from_SV(SV* expoly_sv, ExPolygon* expolygon)
     AV* expoly_av = (AV*)SvRV(expoly_sv);
     const unsigned int num_polygons = av_len(expoly_av)+1;
     expolygon->holes.resize(num_polygons-1);
-    
+
     SV** polygon_sv = av_fetch(expoly_av, 0, 0);
     from_SV(*polygon_sv, &expolygon->contour);
     for (unsigned int i = 0; i < num_polygons-1; i++) {
@@ -403,10 +404,10 @@ SV* to_AV(Line* THIS)
 {
     AV* av = newAV();
     av_extend(av, 1);
-    
+
     av_store(av, 0, perl_to_SV_ref(THIS->a));
     av_store(av, 1, perl_to_SV_ref(THIS->b));
-    
+
     return newRV_noinc((SV*)av);
 }
 
@@ -424,7 +425,7 @@ void from_SV(SV* poly_sv, MultiPoint* THIS)
     AV* poly_av = (AV*)SvRV(poly_sv);
     const unsigned int num_points = av_len(poly_av)+1;
     THIS->points.resize(num_points);
-    
+
     for (unsigned int i = 0; i < num_points; i++) {
         SV** point_sv = av_fetch(poly_av, i, 0);
         from_SV_check(*point_sv, &THIS->points[i]);
@@ -466,7 +467,7 @@ void from_SV_check(SV* poly_sv, Polygon* THIS)
 {
     if (sv_isobject(poly_sv) && !sv_isa(poly_sv, perl_class_name(THIS)) && !sv_isa(poly_sv, perl_class_name_ref(THIS)))
         CONFESS("Not a valid %s object", perl_class_name(THIS));
-    
+
     from_SV_check(poly_sv, (MultiPoint*)THIS);
 }
 
@@ -474,7 +475,7 @@ void from_SV_check(SV* poly_sv, Polyline* THIS)
 {
     if (!sv_isa(poly_sv, perl_class_name(THIS)) && !sv_isa(poly_sv, perl_class_name_ref(THIS)))
         CONFESS("Not a valid %s object", perl_class_name(THIS));
-    
+
     from_SV_check(poly_sv, (MultiPoint*)THIS);
 }
 
@@ -522,7 +523,7 @@ bool from_SV(SV* point_sv, Pointf* point)
     SV* sv_x = *av_fetch(point_av, 0, 0);
     SV* sv_y = *av_fetch(point_av, 1, 0);
     if (!looks_like_number(sv_x) || !looks_like_number(sv_y)) return false;
-    
+
     point->x = SvNV(sv_x);
     point->y = SvNV(sv_y);
     return true;
