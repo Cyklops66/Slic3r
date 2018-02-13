@@ -6,6 +6,7 @@
 #include "Config.hpp"
 
 class wxApp;
+class wxWindow;
 class wxFrame;
 class wxWindow;
 class wxMenuBar;
@@ -15,7 +16,7 @@ class wxString;
 class wxArrayString;
 class wxArrayLong;
 
-namespace Slic3r { 
+namespace Slic3r {
 
 class PresetBundle;
 class PresetCollection;
@@ -26,7 +27,7 @@ class TabIface;
 // !!! If you needed to translate some wxString,
 // !!! please use _(L(string))
 // !!! _() - is a standard wxWidgets macro to translate
-// !!! L() is used only for marking localizable string 
+// !!! L() is used only for marking localizable string
 // !!! It will be used in "xgettext" to create a Locating Message Catalog.
 #define L(s) s
 
@@ -76,7 +77,7 @@ void add_debug_menu(wxMenuBar *menu, int event_language_change);
 void open_preferences_dialog(int event_preferences);
 
 // Create a new preset tab (print, filament and printer),
-void create_preset_tabs(PresetBundle *preset_bundle, 
+void create_preset_tabs(PresetBundle *preset_bundle,
 						bool no_controller, bool is_disabled_button_browse,	bool is_user_agent,
 						int event_value_change, int event_presets_changed,
 						int event_button_browse, int event_button_test);
@@ -91,11 +92,11 @@ void show_error(wxWindow* parent, wxString message);
 void show_info(wxWindow* parent, wxString message, wxString title);
 void warning_catcher(wxWindow* parent, wxString message);
 
-// load language saved at application config 
+// load language saved at application config
 bool load_language();
-// save language at application config 
+// save language at application config
 void save_language();
-// get list of installed languages 
+// get list of installed languages
 void get_installed_languages(wxArrayString & names, wxArrayLong & identifiers);
 // select language from the list of installed languages
 bool select_language(wxArrayString & names, wxArrayLong & identifiers);
@@ -117,6 +118,8 @@ int combochecklist_get_flags(wxComboCtrl* comboCtrl);
 wxString	L_str(std::string str);
 // Return wxString from std::string in UTF8
 wxString	from_u8(std::string str);
+
+wxWindow *get_widget_by_id(int id);
 
 }
 }

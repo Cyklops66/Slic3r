@@ -5,9 +5,9 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
-
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/format.hpp>
 
 #if __APPLE__
 #import <IOKit/pwr_mgt/IOPMLib.h>
@@ -56,8 +56,8 @@ void disable_screensaver()
 {
     #if __APPLE__
     CFStringRef reasonForActivity = CFSTR("Slic3r");
-    IOReturn success = IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep, 
-        kIOPMAssertionLevelOn, reasonForActivity, &assertionID); 
+    IOReturn success = IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep,
+        kIOPMAssertionLevelOn, reasonForActivity, &assertionID);
     // ignore result: success == kIOReturnSuccess
     #elif _WIN32
     SetThreadExecutionState(ES_DISPLAY_REQUIRED | ES_CONTINUOUS);
@@ -83,32 +83,32 @@ std::vector<std::string> scan_serial_ports()
     assert(lRes == ERROR_SUCCESS);
     if (lRes == ERROR_SUCCESS) {
         // 2) Get number of values of SERIALCOM key.
-        DWORD        cValues;                   // number of values for key 
+        DWORD        cValues;                   // number of values for key
         {
             TCHAR    achKey[255];               // buffer for subkey name
-            DWORD    cbName;                    // size of name string 
-            TCHAR    achClass[MAX_PATH] = TEXT("");  // buffer for class name 
-            DWORD    cchClassName = MAX_PATH;   // size of class string 
-            DWORD    cSubKeys=0;                // number of subkeys 
-            DWORD    cbMaxSubKey;               // longest subkey size 
-            DWORD    cchMaxClass;               // longest class string 
-            DWORD    cchMaxValue;               // longest value name 
-            DWORD    cbMaxValueData;            // longest value data 
-            DWORD    cbSecurityDescriptor;      // size of security descriptor 
-            FILETIME ftLastWriteTime;           // last write time 
+            DWORD    cbName;                    // size of name string
+            TCHAR    achClass[MAX_PATH] = TEXT("");  // buffer for class name
+            DWORD    cchClassName = MAX_PATH;   // size of class string
+            DWORD    cSubKeys=0;                // number of subkeys
+            DWORD    cbMaxSubKey;               // longest subkey size
+            DWORD    cchMaxClass;               // longest class string
+            DWORD    cchMaxValue;               // longest value name
+            DWORD    cbMaxValueData;            // longest value data
+            DWORD    cbSecurityDescriptor;      // size of security descriptor
+            FILETIME ftLastWriteTime;           // last write time
             // Get the class name and the value count.
             lRes = RegQueryInfoKey(
-                hKey,                    // key handle 
-                achClass,                // buffer for class name 
-                &cchClassName,           // size of class string 
-                NULL,                    // reserved 
-                &cSubKeys,               // number of subkeys 
-                &cbMaxSubKey,            // longest subkey size 
-                &cchMaxClass,            // longest class string 
-                &cValues,                // number of values for this key 
-                &cchMaxValue,            // longest value name 
-                &cbMaxValueData,         // longest value data 
-                &cbSecurityDescriptor,   // security descriptor 
+                hKey,                    // key handle
+                achClass,                // buffer for class name
+                &cchClassName,           // size of class string
+                NULL,                    // reserved
+                &cSubKeys,               // number of subkeys
+                &cbMaxSubKey,            // longest subkey size
+                &cchMaxClass,            // longest class string
+                &cValues,                // number of values for this key
+                &cchMaxValue,            // longest value name
+                &cbMaxValueData,         // longest value data
+                &cbSecurityDescriptor,   // security descriptor
                 &ftLastWriteTime);       // last write time
             assert(lRes == ERROR_SUCCESS);
         }
@@ -142,9 +142,9 @@ std::vector<std::string> scan_serial_ports()
     }
 #endif
 
-    out.erase(std::remove_if(out.begin(), out.end(), 
-        [](const std::string &key){ 
-            return boost::starts_with(key, "Bluetooth") || boost::starts_with(key, "FireFly"); 
+    out.erase(std::remove_if(out.begin(), out.end(),
+        [](const std::string &key){
+            return boost::starts_with(key, "Bluetooth") || boost::starts_with(key, "FireFly");
         }),
         out.end());
     return out;
@@ -232,7 +232,7 @@ bool select_language(wxArrayString & names,
 	}
 	if (init_selection == identifiers.size())
 		init_selection = 0;
-	long index = wxGetSingleChoiceIndex(_(L("Select the language")), _(L("Language")), 
+	long index = wxGetSingleChoiceIndex(_(L("Select the language")), _(L("Language")),
 										names, init_selection);
 	if (index != -1)
 	{
@@ -255,7 +255,7 @@ bool load_language()
 		language = str_language != "" ? stol(str_language) : wxLANGUAGE_UNKNOWN;
 	}
 
-	if (language == wxLANGUAGE_UNKNOWN) 
+	if (language == wxLANGUAGE_UNKNOWN)
 		return false;
 	wxArrayString	names;
 	wxArrayLong		identifiers;
@@ -350,10 +350,10 @@ void create_preset_tabs(PresetBundle *preset_bundle,
 						bool no_controller, bool is_disabled_button_browse, bool is_user_agent,
 						int event_value_change, int event_presets_changed,
 						int event_button_browse, int event_button_test)
-{	
+{
 	add_created_tab(new TabPrint	(g_wxTabPanel, no_controller), preset_bundle);
 	add_created_tab(new TabFilament	(g_wxTabPanel, no_controller), preset_bundle);
-	add_created_tab(new TabPrinter	(g_wxTabPanel, no_controller, is_disabled_button_browse, is_user_agent), 
+	add_created_tab(new TabPrinter	(g_wxTabPanel, no_controller, is_disabled_button_browse, is_user_agent),
 					preset_bundle);
 	for (size_t i = 0; i < g_wxTabPanel->GetPageCount(); ++ i) {
 		Tab *tab = dynamic_cast<Tab*>(g_wxTabPanel->GetPage(i));
@@ -410,7 +410,7 @@ void change_opt_value(DynamicPrintConfig& config, t_config_option_key opt_key, b
 			double& val = config.opt_float(opt_key, 0);
 			val = boost::any_cast<double>(value);
 			break;
-		}			
+		}
 		case coString:
 			config.set_key_value(opt_key, new ConfigOptionString(boost::any_cast<std::string>(value)));
 			break;
@@ -444,9 +444,9 @@ void change_opt_value(DynamicPrintConfig& config, t_config_option_key opt_key, b
 		case coEnum:{
 			if (opt_key.compare("external_fill_pattern") == 0 ||
 				opt_key.compare("fill_pattern") == 0)
-				config.set_key_value(opt_key, new ConfigOptionEnum<InfillPattern>(boost::any_cast<InfillPattern>(value))); 
+				config.set_key_value(opt_key, new ConfigOptionEnum<InfillPattern>(boost::any_cast<InfillPattern>(value)));
 			else if (opt_key.compare("gcode_flavor") == 0)
-				config.set_key_value(opt_key, new ConfigOptionEnum<GCodeFlavor>(boost::any_cast<GCodeFlavor>(value))); 
+				config.set_key_value(opt_key, new ConfigOptionEnum<GCodeFlavor>(boost::any_cast<GCodeFlavor>(value)));
 			else if (opt_key.compare("support_material_pattern") == 0)
 				config.set_key_value(opt_key, new ConfigOptionEnum<SupportMaterialPattern>(boost::any_cast<SupportMaterialPattern>(value)));
 			else if (opt_key.compare("seam_position") == 0)
@@ -495,7 +495,7 @@ void warning_catcher(wxWindow* parent, wxString message){
 	if (message == _(L("GLUquadricObjPtr | Attempt to free unreferenced scalar")) )
 		return;
 	auto msg = new wxMessageDialog(parent, message, _(L("Warning")), wxOK | wxICON_WARNING);
-	msg->ShowModal();	
+	msg->ShowModal();
 }
 
 wxApp* get_app(){
@@ -568,6 +568,20 @@ wxString L_str(std::string str)
 wxString from_u8(std::string str)
 {
 	return wxString::FromUTF8(str.c_str());
+}
+
+wxWindow *get_widget_by_id(int id)
+{
+    if (g_wxMainFrame == nullptr) {
+        throw std::runtime_error("Main frame not set");
+    }
+
+    wxWindow *window = g_wxMainFrame->FindWindow(id);
+    if (window == nullptr) {
+        throw std::runtime_error((boost::format("Could not find widget by ID: %1%") % id).str());
+    }
+
+    return window;
 }
 
 } }
